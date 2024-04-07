@@ -1,5 +1,5 @@
 import { SaveFile } from './save-file.use-case';
-import fs from 'fs';
+import fs, { writeFileSync } from 'fs';
 
 describe( 'SaveFileUseCase ', () => {
     const options = {
@@ -14,8 +14,8 @@ describe( 'SaveFileUseCase ', () => {
         const outputFolderExists = fs.existsSync('outputs');
         if( outputFolderExists ) fs.rmSync('outputs', { recursive: true });
 
-        const customOutputFolderExists = fs.existsSync(options.fileDestination);
-        if( customOutputFolderExists ) fs.rmSync(options.fileDestination, { recursive: true });
+        const customOutputFolderExists = fs.existsSync(`custom-outputs`);
+        if( customOutputFolderExists ) fs.rmSync(`custom-outputs`, { recursive: true });
     })
     
     
@@ -47,7 +47,34 @@ describe( 'SaveFileUseCase ', () => {
         expect( result ).toBe( true );
         expect( fileExists ).toBe( true );
         expect( fileContent ).toBe( options.fileContent );
-     })
+    })
+
+    test('should return false if directory could not be created', () => {
+        const saveFile = new SaveFile();
+        const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(
+            () => { throw new Error('this is a custom error message from testing'); }
+        );
+
+        const result = saveFile.execute(options);
+
+        expect( result ).toBe( false );
+        mkdirSpy.mockRestore(); // restaura la funcion original
+    })
+     
+    
+
+    test('should return false if file could not be created', () => {
+        const saveFile = new SaveFile();
+        const writeFileSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(
+            () => { throw new Error('this is a custom error message from testing'); }
+        );
+
+        const result = saveFile.execute({ fileContent: 'Hola' });
+
+        expect( result ).toBe( false );
+        writeFileSpy.mockRestore();
+    })
+     
 
 
 })
